@@ -1,4 +1,5 @@
 #include "kalman_filter.h"
+#include <iostream>
 #include "math.h"
 
 using Eigen::MatrixXd;
@@ -40,7 +41,7 @@ void KalmanFilter::Predict() {
    */
   x_ = F_ * x_;
   MatrixXd Ft = F_.transpose();
-  P_ = F_ * P_ * Ft + Q_;
+  P_ = F_ *P_ *Ft + Q_;
 }
 
 void KalmanFilter::Update(const VectorXd &z) {
@@ -48,8 +49,10 @@ void KalmanFilter::Update(const VectorXd &z) {
    * TO_DO: update the state by using Kalman Filter equations
    */
 
+  // calculating error
   VectorXd y = z - H_ * x_;
   UpdateXwithY(y);
+  std::cout << "regular: ";
 }
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
@@ -57,18 +60,24 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
    * TO_DO: update the state by using Extended Kalman Filter equations
    */
   // calculating polar coordinates: distance, bearing, speed
-  float rho = sqrt(pow(x_(0), 2) + pow(x_(1), 2));
+  float rho = sqrt(x_(0)*x_(0) + x_(1)*x_(1));
+  // calculating bearing
   float phi = atan2(x_(1), x_(0));
-  float rho_dot = 0;
+  // calculating the speed
+  float rho_dot = (x_(0)*x_(2) + x_(1)*x_(3)) / rho;
   
+  /**
   if (fabs(rho) < 0.0001) {
-    rho_dot = 0;
-  } else {
-    rho_dot = (x_(0)*x_(2) + x_(1)*x_(3))/rho;
+    rho = 0.0001;
+    rho_dot = 0.0001;
   }
+  */
+  
   VectorXd z_pred(3);
   z_pred << rho, phi, rho_dot;
 
+  // calcualting error
   VectorXd y = z - z_pred;
   UpdateXwithY(y);
+  std::cout << "radial: ";
 }

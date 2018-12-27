@@ -61,23 +61,27 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
    */
   // calculating polar coordinates: distance, bearing, speed
   float rho = sqrt(x_(0)*x_(0) + x_(1)*x_(1));
+  if (fabs(rho) < 0.0001) {
+    rho = 0.0001;
+  }
+
   // calculating bearing
   float phi = atan2(x_(1), x_(0));
   // calculating the speed
   float rho_dot = (x_(0)*x_(2) + x_(1)*x_(3)) / rho;
-  
-  /**
-  if (fabs(rho) < 0.0001) {
-    rho = 0.0001;
-    rho_dot = 0.0001;
-  }
-  */
   
   VectorXd z_pred(3);
   z_pred << rho, phi, rho_dot;
 
   // calcualting error
   VectorXd y = z - z_pred;
+  while ( y(1) > M_PI || y(1) < -M_PI ) {
+    if ( y(1) > M_PI ) {
+      y(1) -= M_PI;
+    } else {
+      y(1) += M_PI;
+    }
+  }
   UpdateXwithY(y);
   std::cout << "radial: ";
 }
